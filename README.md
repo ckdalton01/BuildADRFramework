@@ -1,9 +1,9 @@
 # Multi-ADR Patch Strategy Builder (ConfigMgr)
 
-This repository contains a single PowerShell script, `CreateCollections-ADRs.ps1`, used to create a simple phased patching strategy in Microsoft Configuration Manager (ConfigMgr / SCCM).
+This repository contains a single PowerShell script, `BuildADRFramework.ps1`, used to create a simple phased patching strategy in Microsoft Configuration Manager (ConfigMgr / SCCM).
 
 Key points
-- Single-script repo — most edits happen in `CreateCollections-ADRs.ps1`.
+- Single-script repo — most edits happen in `BuildADRFramework.ps1`.
 - Script is intended to be run from a machine with the ConfigMgr Console installed.
 
 Requirements
@@ -16,12 +16,12 @@ Quick run
 2. Run:
 
 ```powershell
-PowerShell -NoProfile -ExecutionPolicy Bypass -File .\CreateCollections-ADRs.ps1
+PowerShell -NoProfile -ExecutionPolicy Bypass -File .\BuildADRFramework.ps1
 ```
 
-Configuration (edit near top of `CreateCollections-ADRs.ps1`)
-- `$SiteCode` — default in this repo: `CM_CHQ`. Changed to match your site code.
-- `$SiteServer` — default in this repo: `CM1`. Change to your primary site server.
+Configuration (edit near top of `BuildADRFramework.ps1`)
+- `$SiteCode` — User Defined
+- `$SiteServer` — User Defined
 - `$CollectionFolderName` — folder name used under Device Collections (default: `Patch Strategy`).
 - `$Collections`, `$DeploymentPackages`, `$WindowsProducts`, `$OfficeProducts`, `$DefenderProducts` — arrays used to control what is created and which products the ADRs target.
 
@@ -48,13 +48,12 @@ Important implementation notes and conventions
 - The variable `$CMPSSuppressFastNotUsedCheck` is set in the script in some variants to suppress a known warning — leave this unless you understand the SCCM fast-mode check.
 
 Editing guidance
-- Prefer small, localized edits inside `CreateCollections-ADRs.ps1` — it's intended as a single-file tool.
+- Prefer small, localized edits inside `BuildADRFramework.ps1` — it's intended as a single-file tool.
 - If you add non-interactive options (CLI parameters), keep the original `Read-Host` prompts for backward compatibility or provide clear flags at the top of the script.
 - Add helper functions in the same script file rather than splitting into modules unless requested.
 
 Files
-- `CreateCollections-ADRs.ps1` — main script (edit this file to change behavior).
-- `.github/copilot-instructions.md` — guidance for AI coding agents (created/updated).
+- `BuildADRFramework.ps1` — main script (edit this file to change behavior).
 
 Questions / next steps
 - Want the script to support a non-interactive mode (pass `-SourceBasePath` and `-Uninstall` flags)? I can add parameter parsing and preserve interactive defaults.
@@ -128,21 +127,6 @@ A PowerShell automation script that creates a complete phased patching strategy 
 - **Access to a UNC path** for storing deployment package sources (e.g., `\\CM1\Sources\Updates`)
 - **Appropriate SCCM permissions** to create collections, packages, and ADRs
 
-## Installation
-
-1. Clone this repository or download the script:
-   ```powershell
-   git clone https://github.com/ckdalton01/sccm-adr-builder.git
-   cd sccm-adr-builder
-   ```
-
-2. Review and modify the configuration variables at the top of the script:
-   ```powershell
-   $SiteCode = "CM_CHQ"        # Your SCCM site code
-   $SiteServer = "CM1"         # Your SCCM site server
-   $CollectionFolderName = "Patch Strategy"
-   ```
-
 ## Usage
 
 ### Install Mode (Create Components)
@@ -150,7 +134,7 @@ A PowerShell automation script that creates a complete phased patching strategy 
 Run the script in an elevated PowerShell session:
 
 ```powershell
-PowerShell -NoProfile -ExecutionPolicy Bypass -File .\CreateCollections-ADRs.ps1
+PowerShell -NoProfile -ExecutionPolicy Bypass -File .\BuildADRFramework.ps1
 ```
 
 You'll be prompted to enter a UNC path for deployment packages:
@@ -163,7 +147,7 @@ Enter the UNC path for deployment packages (e.g., \\CM1\Sources\Updates): \\CM1\
 To remove all created components:
 
 ```powershell
-PowerShell -NoProfile -ExecutionPolicy Bypass -File .\CreateCollections-ADRs.ps1 -Uninstall
+PowerShell -NoProfile -ExecutionPolicy Bypass -File .\BuildADRFramework.ps1 -Uninstall
 ```
 
 You'll be prompted to type `YES` to confirm the removal.
@@ -177,16 +161,6 @@ You'll be prompted to type `YES` to confirm the removal.
 
 ## Configuration
 
-### Site Settings
-
-Edit these variables near the top of the script:
-
-```powershell
-$SiteCode = "CM_CHQ"                    # Your site code
-$SiteServer = "CM1"                     # Your site server
-$CollectionFolderName = "Patch Strategy" # Collection folder name
-```
-
 ### Product Categories
 
 Customize which products are included in each ADR:
@@ -197,6 +171,10 @@ $WindowsProducts = @(
     "Windows 11",
     "Windows Server 2016",
     "Windows Server 2019",
+    "Microsoft Server operating system-21H2",
+    "Microsoft Server Operating System-22H2",
+    "Microsoft Server Operating System-23H2",
+    "Microsoft Server Operating System-24H2",
     ".NET 9.0",
     ".NET 8.0",
     ".NET 10.0"
