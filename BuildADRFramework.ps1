@@ -793,6 +793,7 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -Product $DefenderProducts `
             -DateReleasedOrRevised Last1Month `
             -Superseded $false `
+            -Title "Broad" `
             -DeploymentPackageName "Defender Updates" `
             -AddToExistingSoftwareUpdateGroup $true `
             -EnabledAfterCreate $true `
