@@ -64,6 +64,25 @@ $ADRNames = @(
     "Third Party Updates"
 )
 
+# Initialize result tracking
+$Results = @{
+    Collections = @{
+        Created = @()
+        AlreadyExisted = @()
+        Failed = @()
+    }
+    Packages = @{
+        Created = @()
+        AlreadyExisted = @()
+        Failed = @()
+    }
+    ADRs = @{
+        Created = @()
+        AlreadyExisted = @()
+        Failed = @()
+    }
+}
+
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
@@ -157,6 +176,7 @@ function Test-SCCMConnection {
         return $false
     }
 }
+
 function Set-CMSoftwareUpdateAutoDeploymentRuleIsDeployed {
     param (
         [Parameter(Mandatory = $true)]
@@ -541,6 +561,7 @@ foreach ($Collection in $Collections) {
     
     if (Get-CMDeviceCollection -Name $CollectionName -ErrorAction SilentlyContinue) {
         Write-Host "  -> Collection already exists: $CollectionName" -ForegroundColor Gray
+        $Results.Collections.AlreadyExisted += $CollectionName
     } else {
         try {
             $Schedule = New-CMSchedule -RecurInterval Days -RecurCount 7
@@ -557,8 +578,10 @@ foreach ($Collection in $Collections) {
             }
             
             Write-Host "  -> Created collection: $CollectionName" -ForegroundColor Green
+            $Results.Collections.Created += $CollectionName
         } catch {
             Write-Warning "  -> Failed to create collection: $CollectionName - $($_.Exception.Message)"
+            $Results.Collections.Failed += @{Name = $CollectionName; Error = $_.Exception.Message}
         }
     }
 }
@@ -573,12 +596,15 @@ foreach ($Package in $DeploymentPackages) {
     
     if (Get-CMSoftwareUpdateDeploymentPackage -Name $PackageName -ErrorAction SilentlyContinue) {
         Write-Host "  -> Package already exists: $PackageName" -ForegroundColor Gray
+        $Results.Packages.AlreadyExisted += $PackageName
     } else {
         try {
             New-CMSoftwareUpdateDeploymentPackage -Name $PackageName -Path $PackagePath -ErrorAction Stop | Out-Null
             Write-Host "  -> Created package: $PackageName at $PackagePath" -ForegroundColor Green
+            $Results.Packages.Created += $PackageName
         } catch {
             Write-Warning "  -> Failed to create package: $PackageName - $($_.Exception.Message)"
+            $Results.Packages.Failed += @{Name = $PackageName; Error = $_.Exception.Message}
         }
     }
 }
@@ -599,6 +625,7 @@ $ADRName = "Windows OS Updates"
 
 if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyContinue) {
     Write-Host "    -> ADR already exists: $ADRName" -ForegroundColor Gray
+    $Results.ADRs.AlreadyExisted += $ADRName
 } else {
     try {
         # Create schedule for daily runs at 1 AM
@@ -676,8 +703,10 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -ErrorAction Stop | Out-Null
         
         Write-Host "    -> Added Production deployment (7 days)" -ForegroundColor Green
+        $Results.ADRs.Created += @{Name = $ADRName; Deployments = @("Test (1 day)", "Broad (3 days)", "Production (7 days)"); Schedule = "Daily at 1 AM"}
     } catch {
-        Write-Warning "    -> Failed to create Windows OS Updates ADR: $($_.Exception.Message) -- Ensure that Products are enabled in Software Update Point."
+        Write-Warning "    -> Failed to create Windows OS Updates ADR: $($_.Exception.Message)"
+        $Results.ADRs.Failed += @{Name = $ADRName; Error = $_.Exception.Message}
     }
 }
 Write-Host ""
@@ -690,6 +719,7 @@ $ADRName = "Office Updates"
 
 if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyContinue) {
     Write-Host "    -> ADR already exists: $ADRName" -ForegroundColor Gray
+    $Results.ADRs.AlreadyExisted += $ADRName
 } else {
     try {
         # Create schedule for daily runs at 2 AM
@@ -766,8 +796,10 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -ErrorAction Stop | Out-Null
         
         Write-Host "    -> Added Production deployment (7 days)" -ForegroundColor Green
+        $Results.ADRs.Created += @{Name = $ADRName; Deployments = @("Test (1 day)", "Broad (3 days)", "Production (7 days)"); Schedule = "Daily at 2 AM"}
     } catch {
-        Write-Warning "    -> Failed to create Office Updates ADR: $($_.Exception.Message) -- Ensure that Products are enabled in Software Update Point."
+        Write-Warning "    -> Failed to create Office Updates ADR: $($_.Exception.Message)"
+        $Results.ADRs.Failed += @{Name = $ADRName; Error = $_.Exception.Message}
     }
 }
 Write-Host ""
@@ -780,6 +812,7 @@ $ADRName = "Defender Updates"
 
 if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyContinue) {
     Write-Host "    -> ADR already exists: $ADRName" -ForegroundColor Gray
+    $Results.ADRs.AlreadyExisted += $ADRName
 } else {
     try {
         # Create schedule for every 8 hours
@@ -857,8 +890,10 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -ErrorAction Stop | Out-Null
         
         Write-Host "    -> Added Production deployment (4 hours)" -ForegroundColor Green
+        $Results.ADRs.Created += @{Name = $ADRName; Deployments = @("Test (immediate)", "Broad (2 hours)", "Production (4 hours)"); Schedule = "Every 8 hours"}
     } catch {
-        Write-Warning "    -> Failed to create Defender Updates ADR: $($_.Exception.Message) -- Ensure that Products are enabled in Software Update Point."
+        Write-Warning "    -> Failed to create Defender Updates ADR: $($_.Exception.Message)"
+        $Results.ADRs.Failed += @{Name = $ADRName; Error = $_.Exception.Message}
     }
 }
 Write-Host ""
@@ -871,6 +906,7 @@ $ADRName = "Third Party Updates"
 
 if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyContinue) {
     Write-Host "    -> ADR already exists: $ADRName" -ForegroundColor Gray
+    $Results.ADRs.AlreadyExisted += $ADRName
 } else {
     try {
         # Create schedule for daily runs at 3 AM
@@ -952,54 +988,121 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -ErrorAction Stop | Out-Null
         
         Write-Host "    -> Added Production deployment (5 days)" -ForegroundColor Green
+        $Results.ADRs.Created += @{Name = $ADRName; Deployments = @("Test (immediate)", "Broad (3 days)", "Production (5 days)"); Schedule = "Daily at 3 AM"}
     } catch {
-        Write-Warning "    -> Failed to create Third Party Updates ADR: $($_.Exception.Message) --Likely no Vendor Catagory for Patch My PC"
+        Write-Warning "    -> Failed to create Third Party Updates ADR: $($_.Exception.Message)"
+        $Results.ADRs.Failed += @{Name = $ADRName; Error = $_.Exception.Message}
     }
 }
 
 Write-Host ""
 
-# --- 6. Summary ---
-Write-Host ""
-Write-Host "[6/6] Deployment Summary" -ForegroundColor Yellow
-Write-Host "  Collections Created: 3" -ForegroundColor Green
-Write-Host "    - 01 - Test - All Devices"
-Write-Host "    - 02 - Broad - All Devices"
-Write-Host "    - 03 - Production - All Devices"
-Write-Host ""
-Write-Host "  Deployment Packages Created: 4" -ForegroundColor Green
-Write-Host "    - Microsoft Updates -> $SourceBasePath\Microsoft Updates"
-Write-Host "    - Office Updates -> $SourceBasePath\Office Updates"
-Write-Host "    - Defender Updates -> $SourceBasePath\Defender Updates"
-Write-Host "    - Third Party Updates -> $SourceBasePath\Third Party Updates"
-Write-Host ""
-Write-Host "  ADRs Created: 4 (with multiple deployments each)" -ForegroundColor Green
-Write-Host "    1. Windows OS Updates" -ForegroundColor Cyan
-Write-Host "       - Test (1 day), Broad (3 days), Production (7 days)"
-Write-Host "       - Runs: Daily at 1 AM"
-Write-Host ""
-Write-Host "    2. Office Updates" -ForegroundColor Cyan
-Write-Host "       - Test (1 day), Broad (3 days), Production (7 days)"
-Write-Host "       - Runs: Daily at 2 AM"
-Write-Host ""
-Write-Host "    3. Defender Updates" -ForegroundColor Cyan
-Write-Host "       - Test (immediate), Production (4 hours)"
-Write-Host "       - Runs: Every 8 hours"
-Write-Host "       - Ignores maintenance windows"
-Write-Host ""
-Write-Host "    4. Third Party Updates" -ForegroundColor Cyan
-Write-Host "       - Test (immediate), Broad (3 days), Production (5 days)"
-Write-Host "       - Runs: Daily at 3 AM"
-Write-Host "       - Creates new Software Update Group each run"
-Write-Host "       - Ignores maintenance windows"
+# --- 6. ENHANCED SUMMARY WITH RESULTS TRACKING ---
 Write-Host ""
 Write-Host "============================================================================" -ForegroundColor Cyan
-Write-Host " Patch Strategy Deployment Complete!" -ForegroundColor Green
+Write-Host " DEPLOYMENT SUMMARY" -ForegroundColor Cyan
 Write-Host "============================================================================" -ForegroundColor Cyan
 Write-Host ""
+
+# Collections Summary
+Write-Host "[COLLECTIONS]" -ForegroundColor Yellow
+if ($Results.Collections.Created.Count -gt 0) {
+    Write-Host "  Created: $($Results.Collections.Created.Count)" -ForegroundColor Green
+    foreach ($coll in $Results.Collections.Created) {
+        Write-Host "    - $coll" -ForegroundColor Green
+    }
+}
+if ($Results.Collections.AlreadyExisted.Count -gt 0) {
+    Write-Host "  Already Existed: $($Results.Collections.AlreadyExisted.Count)" -ForegroundColor Gray
+    foreach ($coll in $Results.Collections.AlreadyExisted) {
+        Write-Host "    - $coll" -ForegroundColor Gray
+    }
+}
+if ($Results.Collections.Failed.Count -gt 0) {
+    Write-Host "  Failed: $($Results.Collections.Failed.Count)" -ForegroundColor Red
+    foreach ($coll in $Results.Collections.Failed) {
+        Write-Host "    - $($coll.Name)" -ForegroundColor Red
+        Write-Host "      Error: $($coll.Error)" -ForegroundColor Red
+    }
+}
+Write-Host ""
+
+# Deployment Packages Summary
+Write-Host "[DEPLOYMENT PACKAGES]" -ForegroundColor Yellow
+if ($Results.Packages.Created.Count -gt 0) {
+    Write-Host "  Created: $($Results.Packages.Created.Count)" -ForegroundColor Green
+    foreach ($pkg in $Results.Packages.Created) {
+        Write-Host "    - $pkg" -ForegroundColor Green
+    }
+}
+if ($Results.Packages.AlreadyExisted.Count -gt 0) {
+    Write-Host "  Already Existed: $($Results.Packages.AlreadyExisted.Count)" -ForegroundColor Gray
+    foreach ($pkg in $Results.Packages.AlreadyExisted) {
+        Write-Host "    - $pkg" -ForegroundColor Gray
+    }
+}
+if ($Results.Packages.Failed.Count -gt 0) {
+    Write-Host "  Failed: $($Results.Packages.Failed.Count)" -ForegroundColor Red
+    foreach ($pkg in $Results.Packages.Failed) {
+        Write-Host "    - $($pkg.Name)" -ForegroundColor Red
+        Write-Host "      Error: $($pkg.Error)" -ForegroundColor Red
+    }
+}
+Write-Host ""
+
+# ADRs Summary
+Write-Host "[AUTOMATIC DEPLOYMENT RULES]" -ForegroundColor Yellow
+if ($Results.ADRs.Created.Count -gt 0) {
+    Write-Host "  Created: $($Results.ADRs.Created.Count)" -ForegroundColor Green
+    foreach ($adr in $Results.ADRs.Created) {
+        Write-Host "    - $($adr.Name)" -ForegroundColor Green
+        Write-Host "      Schedule: $($adr.Schedule)" -ForegroundColor Cyan
+        Write-Host "      Deployments:" -ForegroundColor Cyan
+        foreach ($deployment in $adr.Deployments) {
+            Write-Host "        * $deployment" -ForegroundColor Cyan
+        }
+    }
+}
+if ($Results.ADRs.AlreadyExisted.Count -gt 0) {
+    Write-Host "  Already Existed: $($Results.ADRs.AlreadyExisted.Count)" -ForegroundColor Gray
+    foreach ($adr in $Results.ADRs.AlreadyExisted) {
+        Write-Host "    - $adr" -ForegroundColor Gray
+    }
+}
+if ($Results.ADRs.Failed.Count -gt 0) {
+    Write-Host "  Failed: $($Results.ADRs.Failed.Count)" -ForegroundColor Red
+    foreach ($adr in $Results.ADRs.Failed) {
+        Write-Host "    - $($adr.Name)" -ForegroundColor Red
+        Write-Host "      Error: $($adr.Error)" -ForegroundColor Red
+    }
+}
+Write-Host ""
+
+# Overall Status
+Write-Host "============================================================================" -ForegroundColor Cyan
+$TotalFailed = $Results.Collections.Failed.Count + $Results.Packages.Failed.Count + $Results.ADRs.Failed.Count
+if ($TotalFailed -eq 0) {
+    Write-Host " Patch Strategy Deployment Complete!" -ForegroundColor Green
+} else {
+    Write-Host " Patch Strategy Deployment Completed with $TotalFailed failure(s)" -ForegroundColor Yellow
+}
+Write-Host "============================================================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Next Steps
 Write-Host "Next Steps:" -ForegroundColor Yellow
-Write-Host "  1. Populate device collections with appropriate members"
-Write-Host "  2. Verify ADR schedules and deployments in the ConfigMgr Console"
-Write-Host "  3. Monitor first sync and deployment creation"
-Write-Host "  4. Test with a small group before full rollout"
+Write-Host "  1. Populate device collections with appropriate members" -ForegroundColor White
+Write-Host "  2. Verify ADR schedules and deployments in the ConfigMgr Console" -ForegroundColor White
+Write-Host "  3. Monitor first sync and deployment creation" -ForegroundColor White
+Write-Host "  4. Test with a small group before full rollout" -ForegroundColor White
+
+if ($TotalFailed -gt 0) {
+    Write-Host ""
+    Write-Host "ATTENTION: Some components failed to create. Review errors above." -ForegroundColor Yellow
+    Write-Host "Common issues:" -ForegroundColor Yellow
+    Write-Host "  - Products not synchronized in Software Update Point." -ForegroundColor White
+    Write-Host "    -- Review Product Config at the top of the script and ensure you have them enabled" -ForegroundColor White
+    Write-Host "    -- Administration > Sites > Configure Site Components > Software Update Point > Products" -ForegroundColor White
+    Write-Host "  - Missing vendor categories (e.g., Microsoft, Patch My PC, etc)" -ForegroundColor White
+}
 Write-Host ""
