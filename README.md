@@ -38,28 +38,9 @@ What the script creates (behavior observed in the current code)
 - Automatic Deployment Rules (ADRs) created (if not present):
   1. `Windows OS Updates` — runs daily at 01:00; phased deployments: Test (1 day), Broad (3 days), Production (7 days).
   2. `Office Updates` — runs daily at 02:00; phased deployments: Test (1 day), Broad (3 days), Production (7 days).
-  3. `Defender Updates` — runs every 8 hours; Test (immediate), Production (4 hours); configured to ignore maintenance windows.
+  3. `Defender Updates` — runs every 8 hours; Test (immediate), Broad (2 hours) Production (4 hours); configured to ignore maintenance windows.
   4. `Third Party Updates` — runs daily at 03:00; phased deployments: Test (immediate), Broad (3 days), Production (5 days); vendor set to "Patch My PC" and this ADR creates new Software Update Groups per run.
 
-Important implementation notes and conventions
-- Idempotent creation: the script checks for existing SCCM objects via `Get-CM* -ErrorAction SilentlyContinue` before creating anything — preserve that pattern when modifying the script.
-- Module import: the script imports the ConfigMgr module using `Import-Module "$($ENV:SMS_ADMIN_UI_PATH)\\..\\ConfigurationManager.psd1"`. If `$ENV:SMS_ADMIN_UI_PATH` is not present the script will fail; run on a machine with the SCCM Console.
-- UNC validation: the script prompts for a UNC path and validates it begins with `\\` and trims trailing backslashes.
-- The variable `$CMPSSuppressFastNotUsedCheck` is set in the script in some variants to suppress a known warning — leave this unless you understand the SCCM fast-mode check.
-
-Editing guidance
-- Prefer small, localized edits inside `BuildADRFramework.ps1` — it's intended as a single-file tool.
-- If you add non-interactive options (CLI parameters), keep the original `Read-Host` prompts for backward compatibility or provide clear flags at the top of the script.
-- Add helper functions in the same script file rather than splitting into modules unless requested.
-
-Files
-- `BuildADRFramework.ps1` — main script (edit this file to change behavior).
-
-Questions / next steps
-- Want the script to support a non-interactive mode (pass `-SourceBasePath` and `-Uninstall` flags)? I can add parameter parsing and preserve interactive defaults.
-
-If you'd like, I can also add a small example showing how to run the script non-interactively and add a `-WhatIf` dry-run mode.
-# Multi-ADR Patch Strategy Builder for ConfigMgr
 
 A PowerShell automation script that creates a complete phased patching strategy in Microsoft Configuration Manager (SCCM/MECM). This script sets up device collections, deployment packages, and Automatic Deployment Rules (ADRs) with multiple phased deployments for Windows, Office, Defender, and third-party updates.
 
@@ -137,10 +118,6 @@ Run the script in an elevated PowerShell session:
 PowerShell -NoProfile -ExecutionPolicy Bypass -File .\BuildADRFramework.ps1
 ```
 
-You'll be prompted to enter a UNC path for deployment packages:
-```
-Enter the UNC path for deployment packages (e.g., \\CM1\Sources\Updates): \\CM1\Sources\Updates
-```
 
 ### Uninstall Mode (Remove Components)
 
