@@ -677,7 +677,7 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
         
         Write-Host "    -> Added Production deployment (7 days)" -ForegroundColor Green
     } catch {
-        Write-Warning "    -> Failed to create Windows OS Updates ADR: $($_.Exception.Message)"
+        Write-Warning "    -> Failed to create Windows OS Updates ADR: $($_.Exception.Message) -- Ensure that Products are enabled in Software Update Point."
     }
 }
 Write-Host ""
@@ -767,7 +767,7 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
         
         Write-Host "    -> Added Production deployment (7 days)" -ForegroundColor Green
     } catch {
-        Write-Warning "    -> Failed to create Office Updates ADR: $($_.Exception.Message)"
+        Write-Warning "    -> Failed to create Office Updates ADR: $($_.Exception.Message) -- Ensure that Products are enabled in Software Update Point."
     }
 }
 Write-Host ""
@@ -858,7 +858,7 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
         
         Write-Host "    -> Added Production deployment (4 hours)" -ForegroundColor Green
     } catch {
-        Write-Warning "    -> Failed to create Defender Updates ADR: $($_.Exception.Message)"
+        Write-Warning "    -> Failed to create Defender Updates ADR: $($_.Exception.Message) -- Ensure that Products are enabled in Software Update Point."
     }
 }
 Write-Host ""
