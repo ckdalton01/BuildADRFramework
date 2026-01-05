@@ -643,7 +643,7 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -AvailableImmediately $true `
             -DeadlineTime 3 `
             -DeadlineTimeUnit Days `
-            -UserNotification DisplayAll `
+            -UserNotification DisplaySoftwareCenterOnly `
             -AllowRestart $false `
             -SuppressRestartServer $false `
             -SuppressRestartWorkstation $false `
@@ -665,7 +665,7 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -AvailableImmediately $true `
             -DeadlineTime 7 `
             -DeadlineTimeUnit Days `
-            -UserNotification DisplayAll `
+            -UserNotification DisplaySoftwareCenterOnly `
             -AllowRestart $false `
             -SuppressRestartServer $false `
             -SuppressRestartWorkstation $false `
@@ -733,7 +733,7 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -AvailableImmediately $true `
             -DeadlineTime 3 `
             -DeadlineTimeUnit Days `
-            -UserNotification DisplayAll `
+            -UserNotification DisplaySoftwareCenterOnly `
             -AllowRestart $false `
             -SuppressRestartServer $false `
             -SuppressRestartWorkstation $false `
@@ -755,7 +755,7 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -AvailableImmediately $true `
             -DeadlineTime 7 `
             -DeadlineTimeUnit Days `
-            -UserNotification DisplayAll `
+            -UserNotification DisplaySoftwareCenterOnly `
             -AllowRestart $false `
             -SuppressRestartServer $false `
             -SuppressRestartWorkstation $false `
@@ -801,7 +801,7 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -Schedule $Schedule `
             -AvailableImmediately $true `
             -DeadlineImmediately $true `
-            -UserNotification DisplayAll `
+            -UserNotification DisplaySoftwareCenterOnly `
             -AllowSoftwareInstallationOutsideMaintenanceWindow $true `
             -AllowRestart $false `
             -SuppressRestartServer $true `
@@ -822,7 +822,8 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -AvailableImmediately $true `
             -DeadlineTime 2 `
             -DeadlineTimeUnit Hours `
-            -UserNotification DisplayAll `
+            -UserNotification DisplaySoftwareCenterOnly `
+            -AllowSoftwareInstallationOutsideMaintenanceWindow $true `
             -AllowRestart $false `
             -SuppressRestartServer $true `
             -SuppressRestartWorkstation $true `
@@ -844,7 +845,8 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -AvailableImmediately $true `
             -DeadlineTime 4 `
             -DeadlineTimeUnit Hours `
-            -UserNotification DisplayAll `
+            -UserNotification DisplaySoftwareCenterOnly `
+            -AllowSoftwareInstallationOutsideMaintenanceWindow $true `
             -AllowRestart $false `
             -SuppressRestartServer $true `
             -SuppressRestartWorkstation $true `
@@ -915,7 +917,8 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -AvailableImmediately $true `
             -DeadlineTime 3 `
             -DeadlineTimeUnit Days `
-            -UserNotification DisplayAll `
+            -UserNotification DisplaySoftwareCenterOnly `
+            -AllowSoftwareInstallationOutsideMaintenanceWindow $true `
             -AllowRestart $false `
             -SuppressRestartServer $true `
             -SuppressRestartWorkstation $true `
@@ -937,7 +940,8 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
             -AvailableImmediately $true `
             -DeadlineTime 5 `
             -DeadlineTimeUnit Days `
-            -UserNotification DisplayAll `
+            -UserNotification DisplaySoftwareCenterOnly `
+            -AllowSoftwareInstallationOutsideMaintenanceWindow $true `
             -AllowRestart $false `
             -SuppressRestartServer $true `
             -SuppressRestartWorkstation $true `
@@ -949,7 +953,7 @@ if (Get-CMSoftwareUpdateAutoDeploymentRule -Name $ADRName -ErrorAction SilentlyC
         
         Write-Host "    -> Added Production deployment (5 days)" -ForegroundColor Green
     } catch {
-        Write-Warning "    -> Failed to create Third Party Updates ADR: $($_.Exception.Message)"
+        Write-Warning "    -> Failed to create Third Party Updates ADR: $($_.Exception.Message) --Likely no Vendor Catagory for Patch My PC"
     }
 }
 
